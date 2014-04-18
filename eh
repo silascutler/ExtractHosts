@@ -41,6 +41,8 @@ if __name__ == "__main__":
                         help="Show file names along with results")
     parser.add_argument('-d', '--hide-duplicates', default=False, required=False, action='store_true',
                         help="Hide duplicate results (hides per file when show-files is enabled)")
+    parser.add_argument('-s', '--strict', default=False, required=False, action='store_true',
+                        help="Stricter processing of domains")
     parser.add_argument('-T', '--test', default=False, required=False, action='store_true',
                         help="Run some quick self tests")
 
@@ -52,11 +54,12 @@ if __name__ == "__main__":
 
     show_files = args.show_files
     hide_duplicates = args.hide_duplicates
+    strict_domains = args.strict
 
     if len(args.path) == 0:
         with stdin as fh:
-            for domain in scan_file_handle(fh):
+            for domain in scan_file_handle(fh, strict_domains):
                 print_result("stdin", domain, show_files, hide_duplicates)
     else:
-        for (f, domain) in scan_paths(args.path, args.recursive):
+        for (f, domain) in scan_paths(args.path, args.recursive, strict_domains):
             print_result(f, domain, show_files, hide_duplicates)

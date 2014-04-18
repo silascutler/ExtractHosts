@@ -33,9 +33,10 @@ help
       -d, --hide-duplicates
                             Hide duplicate results (hides per file when show-files
                             is enabled)
+      -s, --strict          Stricter processing of domains
       -T, --test            Run some quick self tests
 
-    /usr/local/bin/eh v1.0.0 by Brian Wallace (@botnet_hunter)
+    /usr/local/bin/eh v1.1.0 by Brian Wallace (@botnet_hunter)
 wget
 ----
     bwall@research:~$ wget http://bwall.github.io/ -qO- | eh -d
@@ -101,6 +102,7 @@ Change log
 Version 1.1.0
 -------------
 * Files are no longer loaded completely into RAM so larger files can be processed (performance increase noticed)
+* Strict mode added, where domains are only considered if all lower case
 
 TODO
 ====
@@ -108,4 +110,3 @@ TODO
 * Heavier testing
 * Improve performance
 * Multiple core processing support
-* Strict mode
