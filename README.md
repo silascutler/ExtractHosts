@@ -103,3 +103,4 @@ TODO
 * Improve performance
 * Buffer reading the file into RAM instead of all at once
 * Multiple core processing support
+* Strict mode

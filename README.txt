@@ -101,3 +101,6 @@ TODO
 * IPv6 regex needs to be shorted and heavily tested
 * Heavier testing
 * Improve performance
+* Buffer reading the file into RAM instead of all at once
+* Multiple core processing support
+* Strict mode
