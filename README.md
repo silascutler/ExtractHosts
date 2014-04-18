@@ -96,11 +96,16 @@ File system recursion
     /home/bwall/Downloads/PEStudio/PeStudioBlackListLanguages.xml	www.winitor.com
     /home/bwall/Downloads/PEStudio/PeStudioBlackListLanguages.xml	msdn.microsoft.com
 
+Change log
+==========
+Version 1.1.0
+-------------
+* Files are no longer loaded completely into RAM so larger files can be processed (performance increase noticed)
+
 TODO
 ====
 * IPv6 regex needs to be shorted and heavily tested
 * Heavier testing
 * Improve performance
-* Buffer reading the file into RAM instead of all at once
 * Multiple core processing support
 * Strict mode

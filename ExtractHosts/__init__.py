@@ -64,7 +64,7 @@ def get_version():
     """
     Function to manually update for each version
     """
-    return "1.0.0"
+    return "1.1.0"
 
 
 def extract_ipv4(to_check):
@@ -136,11 +136,47 @@ def extract_strings(data, minimum=4, charset=printable):
         yield result
 
 
+def extract_strings_from_file_handle(fh, minimum=4, charset=printable):
+    """
+    Gets all strings based on the supplied character set
+    Can work on binary data (PE files, etc)
+    """
+    result = ""
+    c = fh.read(1)
+    while c != "":
+        if c in charset:
+            result += c
+            c = fh.read(1)
+            continue
+        if len(result) >= minimum:
+            yield result
+        result = ""
+        c = fh.read(1)
+    if len(result) >= minimum:
+        yield result
+
+
 def extract_hosts_from_string(to_check):
     """
     Extracts any hosts from strings
     """
     for s in extract_strings(to_check, 3, domain_characters):
+        data = extract_domain(s)
+        if data:
+            yield data
+        data = extract_ipv4(s)
+        if data:
+            yield data
+        data = extract_ipv6(s)
+        if data:
+            yield data
+
+
+def extract_hosts_from_file_handle(fh):
+    """
+    Extracts any hosts from file handle
+    """
+    for s in extract_strings_from_file_handle(fh, 3, domain_characters):
         data = extract_domain(s)
         if data:
             yield data
@@ -175,9 +211,7 @@ def _test_extract_hosts_from_string():
 
 
 def scan_file_handle(file_handle):
-    file_content = file_handle.read()
-    hosts = extract_hosts_from_string(file_content)
-    for host in hosts:
+    for host in extract_hosts_from_file_handle(file_handle):
         yield host
 
 
