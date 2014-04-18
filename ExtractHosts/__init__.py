@@ -5,7 +5,8 @@ from os.path import isfile, isdir, join, abspath
 from socket import inet_pton, AF_INET6, error as socket_error
 
 domain_characters = ascii_lowercase + ascii_uppercase + digits + "-.:"
-is_domain_regex = compile("([a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]\.)+[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9]")
+is_domain_regex_strict = compile("([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]")
+is_domain_regex = compile("([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]", IGNORECASE)
 is_ipv4_regex = compile("[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]")
 is_ipv6_regex = compile("((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0"
                         "-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:)"
@@ -64,10 +65,10 @@ def get_version():
     """
     Function to manually update for each version
     """
-    return "1.0.0"
+    return "1.1.0"
 
 
-def extract_ipv4(to_check):
+def extract_ipv4(to_check, strict=False):
     """
     Extracts any ipv4 address from the supplied string
     """
@@ -88,7 +89,7 @@ def is_valid_ipv6(to_check):
         return False
 
 
-def extract_ipv6(to_check):
+def extract_ipv6(to_check, strict=False):
     """
     Extracts any ipv6 address from the supplied string
     """
@@ -98,11 +99,14 @@ def extract_ipv6(to_check):
     return None
 
 
-def extract_domain(to_check):
+def extract_domain(to_check, strict=False):
     """
     Extracts any domain from the supplied string
     """
-    r = is_domain_regex.search(to_check)
+    if strict:
+        r = is_domain_regex_strict.search(to_check)
+    else:
+        r = is_domain_regex.search(to_check)
     if r and has_valid_tld(r.group(0)):
         return r.group(0)
     return None
@@ -136,18 +140,54 @@ def extract_strings(data, minimum=4, charset=printable):
         yield result
 
 
-def extract_hosts_from_string(to_check):
+def extract_strings_from_file_handle(fh, minimum=4, charset=printable):
+    """
+    Gets all strings based on the supplied character set
+    Can work on binary data (PE files, etc)
+    """
+    result = ""
+    c = fh.read(1)
+    while c != "":
+        if c in charset:
+            result += c
+            c = fh.read(1)
+            continue
+        if len(result) >= minimum:
+            yield result
+        result = ""
+        c = fh.read(1)
+    if len(result) >= minimum:
+        yield result
+
+
+def extract_hosts_from_string(to_check, strict_domains):
     """
     Extracts any hosts from strings
     """
     for s in extract_strings(to_check, 3, domain_characters):
-        data = extract_domain(s)
+        data = extract_domain(s, strict_domains)
         if data:
             yield data
-        data = extract_ipv4(s)
+        data = extract_ipv4(s, strict_domains)
         if data:
             yield data
-        data = extract_ipv6(s)
+        data = extract_ipv6(s, strict_domains)
+        if data:
+            yield data
+
+
+def extract_hosts_from_file_handle(fh, strict_domains):
+    """
+    Extracts any hosts from file handle
+    """
+    for s in extract_strings_from_file_handle(fh, 3, domain_characters):
+        data = extract_domain(s, strict_domains)
+        if data:
+            yield data
+        data = extract_ipv4(s, strict_domains)
+        if data:
+            yield data
+        data = extract_ipv6(s, strict_domains)
         if data:
             yield data
 
@@ -174,14 +214,12 @@ def _test_extract_hosts_from_string():
     print "Passed"
 
 
-def scan_file_handle(file_handle):
-    file_content = file_handle.read()
-    hosts = extract_hosts_from_string(file_content)
-    for host in hosts:
+def scan_file_handle(file_handle, strict_domains):
+    for host in extract_hosts_from_file_handle(file_handle, strict_domains):
         yield host
 
 
-def scan_paths(paths, recursive):
+def scan_paths(paths, recursive, strict_domains):
     while len(paths) != 0:
         try:
             file_path = abspath(paths[0])
@@ -189,7 +227,7 @@ def scan_paths(paths, recursive):
             if isfile(file_path):
                 try:
                     with open(file_path, mode='rb') as file_handle:
-                        for host in scan_file_handle(file_handle):
+                        for host in scan_file_handle(file_handle, strict_domains):
                             yield (file_path, host)
                 except IOError:
                     pass

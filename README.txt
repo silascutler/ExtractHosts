@@ -33,9 +33,10 @@ help
       -d, --hide-duplicates
                             Hide duplicate results (hides per file when show-files
                             is enabled)
+      -s, --strict          Stricter processing of domains
       -T, --test            Run some quick self tests
 
-    /usr/local/bin/eh v1.0.0 by Brian Wallace (@botnet_hunter)
+    /usr/local/bin/eh v1.1.0 by Brian Wallace (@botnet_hunter)
 wget
 ----
     bwall@research:~$ wget http://bwall.github.io/ -qO- | eh -d
@@ -96,11 +97,16 @@ File system recursion
     /home/bwall/Downloads/PEStudio/PeStudioBlackListLanguages.xml	www.winitor.com
     /home/bwall/Downloads/PEStudio/PeStudioBlackListLanguages.xml	msdn.microsoft.com
 
+Change log
+==========
+Version 1.1.0
+-------------
+* Files are no longer loaded completely into RAM so larger files can be processed (performance increase noticed)
+* Strict mode added, where domains are only considered if all lower case
+
 TODO
 ====
 * IPv6 regex needs to be shorted and heavily tested
 * Heavier testing
 * Improve performance
-* Buffer reading the file into RAM instead of all at once
 * Multiple core processing support
-* Strict mode
