@@ -17,7 +17,8 @@ The following are just some example usages
 help
 ----
     bwall@research:~$ eh -h
-    usage: /usr/local/bin/eh [-h] [-v] [-r] [-f] [-d] [-T] [path [path ...]]
+    usage: ./eh [-h] [-v] [-r] [-f] [-d] [-s] [-T] [-4] [-6] [-D]
+            [path [path ...]]
 
     Identifies and extracts domains and IPs from files
 
@@ -35,8 +36,12 @@ help
                             is enabled)
       -s, --strict          Stricter processing of domains
       -T, --test            Run some quick self tests
+      -4, --ipv4            Return IPv4 results
+      -6, --ipv6            Return IPv6 results
+      -D, --domain          Return domain results
 
-    /usr/local/bin/eh v1.1.0 by Brian Wallace (@botnet_hunter)
+    /usr/local/bin/eh v1.2.0 by Brian Wallace (@botnet_hunter)
+
 wget
 ----
     bwall@research:~$ wget http://bwall.github.io/ -qO- | eh -d
@@ -99,6 +104,10 @@ File system recursion
 
 Change log
 ==========
+Version 1.2.0
+-------------
+* Added arguments to filter results for only desired host types (IPv4, IPv6, Domain)
+
 Version 1.1.0
 -------------
 * Files are no longer loaded completely into RAM so larger files can be processed (performance increase noticed)
@@ -106,7 +115,7 @@ Version 1.1.0
 
 TODO
 ====
-* IPv6 regex needs to be shorted and heavily tested
+* IPv6 regex needs to be shortened and heavily tested
 * Heavier testing
 * Improve performance
 * Multiple core processing support

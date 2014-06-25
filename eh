@@ -45,6 +45,12 @@ if __name__ == "__main__":
                         help="Stricter processing of domains")
     parser.add_argument('-T', '--test', default=False, required=False, action='store_true',
                         help="Run some quick self tests")
+    parser.add_argument('-4', '--ipv4', default=False, required=False, action='store_true',
+                        help="Return IPv4 results")
+    parser.add_argument('-6', '--ipv6', default=False, required=False, action='store_true',
+                        help="Return IPv6 results")
+    parser.add_argument('-D', '--domain', default=False, required=False, action='store_true',
+                        help="Return domain results")
 
     args = parser.parse_args()
 
@@ -56,10 +62,19 @@ if __name__ == "__main__":
     hide_duplicates = args.hide_duplicates
     strict_domains = args.strict
 
+    check_ipv4 = args.ipv4
+    check_ipv6 = args.ipv6
+    check_domain = args.domain
+
+    if not check_ipv4 and not check_ipv6 and not check_domain:
+        check_ipv6 = True
+        check_ipv4 = True
+        check_domain = True
+
     if len(args.path) == 0:
         with stdin as fh:
-            for domain in scan_file_handle(fh, strict_domains):
+            for domain in scan_file_handle(fh, strict_domains, check_ipv4, check_ipv6, check_domain):
                 print_result("stdin", domain, show_files, hide_duplicates)
     else:
-        for (f, domain) in scan_paths(args.path, args.recursive, strict_domains):
+        for (f, domain) in scan_paths(args.path, args.recursive, strict_domains, check_ipv4, check_ipv6, check_domain):
             print_result(f, domain, show_files, hide_duplicates)
