@@ -65,7 +65,7 @@ def get_version():
     """
     Function to manually update for each version
     """
-    return "1.1.0"
+    return "1.2.0"
 
 
 def extract_ipv4(to_check, strict=False):
@@ -176,20 +176,23 @@ def extract_hosts_from_string(to_check, strict_domains):
             yield data
 
 
-def extract_hosts_from_file_handle(fh, strict_domains):
+def extract_hosts_from_file_handle(fh, strict_domains, check_ipv4, check_ipv6, check_domain):
     """
     Extracts any hosts from file handle
     """
     for s in extract_strings_from_file_handle(fh, 3, domain_characters):
-        data = extract_domain(s, strict_domains)
-        if data:
-            yield data
-        data = extract_ipv4(s, strict_domains)
-        if data:
-            yield data
-        data = extract_ipv6(s, strict_domains)
-        if data:
-            yield data
+        if check_domain:
+            data = extract_domain(s, strict_domains)
+            if data:
+                yield data
+        if check_ipv4:
+            data = extract_ipv4(s, strict_domains)
+            if data:
+                yield data
+        if check_ipv6:
+            data = extract_ipv6(s, strict_domains)
+            if data:
+                yield data
 
 
 def _test_extract_hosts_from_string():
@@ -205,7 +208,7 @@ def _test_extract_hosts_from_string():
         "recipesforourdailybread.com",
     ]
 
-    for host in extract_hosts_from_string("\r\n".join(expected_back)):
+    for host in extract_hosts_from_string("\r\n".join(expected_back), True):
         if host not in expected_back:
             raise Exception("Not value in supplied set")
         expected_back.remove(host)
@@ -214,12 +217,12 @@ def _test_extract_hosts_from_string():
     print "Passed"
 
 
-def scan_file_handle(file_handle, strict_domains):
-    for host in extract_hosts_from_file_handle(file_handle, strict_domains):
+def scan_file_handle(file_handle, strict_domains, check_ipv4, check_ipv6, check_domain):
+    for host in extract_hosts_from_file_handle(file_handle, strict_domains, check_ipv4, check_ipv6, check_domain):
         yield host
 
 
-def scan_paths(paths, recursive, strict_domains):
+def scan_paths(paths, recursive, strict_domains, check_ipv4, check_ipv6, check_domain):
     while len(paths) != 0:
         try:
             file_path = abspath(paths[0])
@@ -227,7 +230,7 @@ def scan_paths(paths, recursive, strict_domains):
             if isfile(file_path):
                 try:
                     with open(file_path, mode='rb') as file_handle:
-                        for host in scan_file_handle(file_handle, strict_domains):
+                        for host in scan_file_handle(file_handle, strict_domains, check_ipv4, check_ipv6, check_domain):
                             yield (file_path, host)
                 except IOError:
                     pass
