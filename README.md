@@ -40,7 +40,7 @@ help
       -6, --ipv6            Return IPv6 results
       -D, --domain          Return domain results
 
-    /usr/local/bin/eh v1.3.0 by Brian Wallace (@botnet_hunter)
+    /usr/local/bin/eh v1.3.1 by Brian Wallace (@botnet_hunter)
 
 wget
 ----

@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='Extracthosts',
-      version='1.3.0',
+      version='1.3.1',
       description='Extracts IPs and domain names from files',
       author='Brian Wallace',
       author_email='bwall@ballastsecurity.net',

@@ -3,8 +3,9 @@ from re import compile, IGNORECASE, S
 from os import listdir
 from os.path import isfile, isdir, join, abspath
 from socket import inet_pton, AF_INET6, error as socket_error
+from io import open
 
-domain_characters = ascii_lowercase + ascii_uppercase + digits + "-.:"
+domain_characters = set(ascii_lowercase + ascii_uppercase + digits + "-.:")
 is_domain_regex_strict = compile("([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]")
 is_domain_regex = compile("([a-z0-9][a-z0-9\-]{0,61}[a-z0-9]\.)+[a-z0-9][a-z0-9\-]*[a-z0-9]", IGNORECASE)
 is_ipv4_regex = compile("[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]\.[1-2]?[0-9]?[0-9]")
@@ -20,7 +21,7 @@ is_ipv6_regex = compile("((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-F
                         ":((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-"
                         "Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-"
                         "4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?", IGNORECASE | S)
-tlds = ["AC", "ACADEMY", "ACTOR", "AD", "AE", "AERO", "AF", "AG", "AGENCY", "AI", "AL", "AM", "AN", "AO", "AQ", "AR",
+tlds = {"AC", "ACADEMY", "ACTOR", "AD", "AE", "AERO", "AF", "AG", "AGENCY", "AI", "AL", "AM", "AN", "AO", "AQ", "AR",
         "ARPA", "AS", "ASIA", "AT", "AU", "AW", "AX", "AZ", "BA", "BAR", "BARGAINS", "BB", "BD", "BE", "BERLIN", "BEST",
         "BF", "BG", "BH", "BI", "BID", "BIKE", "BIZ", "BJ", "BLUE", "BM", "BN", "BO", "BOUTIQUE", "BR", "BS", "BT",
         "BUILD", "BUILDERS", "BUZZ", "BV", "BW", "BY", "BZ", "CA", "CAB", "CAMERA", "CAMP", "CARDS", "CAREERS", "CAT",
@@ -58,14 +59,14 @@ tlds = ["AC", "ACADEMY", "ACTOR", "AD", "AE", "AERO", "AF", "AG", "AGENCY", "AI"
         "XN--MGBX4CD0AB", "XN--NGBC5AZD", "XN--NQV7F", "XN--NQV7FS00EMA", "XN--O3CW4H", "XN--OGBPF8FL", "XN--P1AI",
         "XN--PGBS0DH", "XN--Q9JYB4C", "XN--RHQV96G", "XN--S9BRJ9C", "XN--UNUP4Y", "XN--WGBH1C", "XN--WGBL6A",
         "XN--XKC2AL3HYE2A", "XN--XKC2DL3A5EE0H", "XN--YFRO4I67O", "XN--YGBI2AMMX", "XN--ZFR164B", "XXX", "XYZ", "YE",
-        "YT", "ZA", "ZM", "ZONE", "ZW"]
+        "YT", "ZA", "ZM", "ZONE", "ZW"}
 
 
 def get_version():
     """
     Function to manually update for each version
     """
-    return "1.3.0"
+    return "1.3.1"
 
 
 def extract_ipv4(to_check, strict=False):
@@ -116,7 +117,7 @@ def has_valid_tld(to_check):
     """
     Checks if supposed domain has a valid TLD
     """
-    if to_check.find(".") == -1:
+    if "." not in to_check:
         return False
     if to_check[to_check.rfind(".") + 1:].upper() in tlds:
         return True
@@ -134,33 +135,34 @@ def extract_strings(data, minimum=4, charset=printable):
     #   2 - ASCII
     #   3 - UTF-16LE - expecting character
     #   4 - UTF-16LE - expecting null
+    characters = set(charset)
     state = 0
     result = ""
     for c in data:
         if state == 0:
-            if c in charset:
+            if c in characters:
                 result += c
                 state = 1
                 continue
             continue
         elif state == 1:
-            if c == 0x00:
+            if c == '\0':
                 state = 3
                 continue
-            elif c in charset:
+            elif c in characters:
                 result += c
                 continue
         elif state == 2:
-            if c in charset:
+            if c in characters:
                 result += c
                 continue
         elif state == 3:
-            if c in charset:
+            if c in characters:
                 result += c
                 state = 4
                 continue
         elif state == 4:
-            if c == 0x00:
+            if c == '\0':
                 state = 3
                 continue
         if len(result) >= minimum:
@@ -184,65 +186,50 @@ def extract_strings_from_file_handle(fh, minimum=4, charset=printable):
     #   4 - UTF-16LE - expecting null
     state = 0
     result = ""
-    c = fh.read(1)
+    read = fh.read
+    c = read(1)
     while c != "":
         if state == 0:
             if c in charset:
                 result += c
                 state = 1
-                c = fh.read(1)
+                c = read(1)
                 continue
-            c = fh.read(1)
+            c = read(1)
             continue
         elif state == 1:
-            if ord(c) == 0x00:
+            if c == '\0':
                 state = 3
-                c = fh.read(1)
+                c = read(1)
                 continue
             elif c in charset:
                 result += c
                 state = 2
-                c = fh.read(1)
+                c = read(1)
                 continue
         elif state == 2:
             if c in charset:
                 result += c
-                c = fh.read(1)
+                c = read(1)
                 continue
         elif state == 3:
             if c in charset:
                 result += c
                 state = 4
-                c = fh.read(1)
+                c = read(1)
                 continue
         elif state == 4:
-            if ord(c) == 0x00:
+            if c == '\0':
                 state = 3
-                c = fh.read(1)
+                c = read(1)
                 continue
         if len(result) >= minimum:
             yield result
         result = ""
         state = 0
-        c = fh.read(1)
+        c = read(1)
     if len(result) >= minimum:
         yield result
-
-
-def extract_hosts_from_string(to_check, strict_domains):
-    """
-    Extracts any hosts from strings
-    """
-    for s in extract_strings(to_check, 3, domain_characters):
-        data = extract_domain(s, strict_domains)
-        if data:
-            yield data
-        data = extract_ipv4(s, strict_domains)
-        if data:
-            yield data
-        data = extract_ipv6(s, strict_domains)
-        if data:
-            yield data
 
 
 def extract_hosts_from_file_handle(fh, strict_domains, check_ipv4, check_ipv6, check_domain):
@@ -277,7 +264,8 @@ def _test_extract_hosts_from_string():
         "recipesforourdailybread.com",
     ]
 
-    for host in extract_hosts_from_string("\r\n".join(expected_back), True):
+    from io import BytesIO
+    for host in extract_hosts_from_file_handle(BytesIO("\r\n".join(expected_back)), True, True, True, True):
         if host not in expected_back:
             raise Exception("Not value in supplied set")
         expected_back.remove(host)
@@ -298,7 +286,7 @@ def scan_paths(paths, recursive, strict_domains, check_ipv4, check_ipv6, check_d
             del paths[0]
             if isfile(file_path):
                 try:
-                    with open(file_path, mode='rb') as file_handle:
+                    with open(file_path, mode='rb', buffering=64000000) as file_handle:
                         for host in scan_file_handle(file_handle, strict_domains, check_ipv4, check_ipv6, check_domain):
                             yield (file_path, host)
                 except IOError:
