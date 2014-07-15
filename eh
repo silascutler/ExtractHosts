@@ -15,9 +15,9 @@ def print_result(file, domain, show_files, hide_duplicates):
             if domain in results[key]:
                 return
         if key not in results:
-            results[key] = []
+            results[key] = set()
         if domain not in results[key]:
-            results[key].append(domain)
+            results[key].add(domain)
     if show_files:
         print "{0}\t{1}".format(file, domain)
     else:
@@ -72,7 +72,8 @@ if __name__ == "__main__":
         check_domain = True
 
     if len(args.path) == 0:
-        with stdin as fh:
+        import io
+        with io.open(stdin.fileno(), mode='rb') as fh:
             for domain in scan_file_handle(fh, strict_domains, check_ipv4, check_ipv6, check_domain):
                 print_result("stdin", domain, show_files, hide_duplicates)
     else:
