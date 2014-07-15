@@ -40,7 +40,7 @@ help
       -6, --ipv6            Return IPv6 results
       -D, --domain          Return domain results
 
-    /usr/local/bin/eh v1.2.0 by Brian Wallace (@botnet_hunter)
+    /usr/local/bin/eh v1.3.0 by Brian Wallace (@botnet_hunter)
 
 wget
 ----
@@ -104,6 +104,10 @@ File system recursion
 
 Change log
 ==========
+Version 1.3.0
+-------------
+* Added UTF-16LE support in IPs and Domains
+
 Version 1.2.0
 -------------
 * Added arguments to filter results for only desired host types (IPv4, IPv6, Domain)

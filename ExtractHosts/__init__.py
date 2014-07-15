@@ -65,7 +65,7 @@ def get_version():
     """
     Function to manually update for each version
     """
-    return "1.2.0"
+    return "1.3.0"
 
 
 def extract_ipv4(to_check, strict=False):
@@ -128,14 +128,45 @@ def extract_strings(data, minimum=4, charset=printable):
     Gets all strings based on the supplied character set
     Can work on binary data (PE files, etc)
     """
+    # states
+    #   0 - None
+    #   1 - ASCII or UTF-16LE
+    #   2 - ASCII
+    #   3 - UTF-16LE - expecting character
+    #   4 - UTF-16LE - expecting null
+    state = 0
     result = ""
     for c in data:
-        if c in charset:
-            result += c
+        if state == 0:
+            if c in charset:
+                result += c
+                state = 1
+                continue
             continue
+        elif state == 1:
+            if c == 0x00:
+                state = 3
+                continue
+            elif c in charset:
+                result += c
+                continue
+        elif state == 2:
+            if c in charset:
+                result += c
+                continue
+        elif state == 3:
+            if c in charset:
+                result += c
+                state = 4
+                continue
+        elif state == 4:
+            if c == 0x00:
+                state = 3
+                continue
         if len(result) >= minimum:
             yield result
         result = ""
+        state = 0
     if len(result) >= minimum:
         yield result
 
@@ -145,16 +176,54 @@ def extract_strings_from_file_handle(fh, minimum=4, charset=printable):
     Gets all strings based on the supplied character set
     Can work on binary data (PE files, etc)
     """
+    # states
+    #   0 - None
+    #   1 - ASCII or UTF-16LE
+    #   2 - ASCII
+    #   3 - UTF-16LE - expecting character
+    #   4 - UTF-16LE - expecting null
+    state = 0
     result = ""
     c = fh.read(1)
     while c != "":
-        if c in charset:
-            result += c
+        if state == 0:
+            if c in charset:
+                result += c
+                state = 1
+                c = fh.read(1)
+                continue
             c = fh.read(1)
             continue
+        elif state == 1:
+            if ord(c) == 0x00:
+                state = 3
+                c = fh.read(1)
+                continue
+            elif c in charset:
+                result += c
+                state = 2
+                c = fh.read(1)
+                continue
+        elif state == 2:
+            if c in charset:
+                result += c
+                c = fh.read(1)
+                continue
+        elif state == 3:
+            if c in charset:
+                result += c
+                state = 4
+                c = fh.read(1)
+                continue
+        elif state == 4:
+            if ord(c) == 0x00:
+                state = 3
+                c = fh.read(1)
+                continue
         if len(result) >= minimum:
             yield result
         result = ""
+        state = 0
         c = fh.read(1)
     if len(result) >= minimum:
         yield result
