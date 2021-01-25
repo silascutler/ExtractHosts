@@ -140,6 +140,12 @@ def extract_strings(data, minimum=4, charset=printable):
     state = 0
     result = ""
     for c in data:
+        try:
+            c = c.decode("utf-8")
+        except Exception as e:
+            #print(e)
+            c = read(1)
+            continue         
         if state == 0:
             if c in characters:
                 result += c
