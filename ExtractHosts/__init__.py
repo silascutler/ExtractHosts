@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from string import printable, ascii_lowercase, ascii_uppercase, digits
 from re import compile, IGNORECASE, S
 from os import listdir
@@ -66,7 +67,7 @@ def get_version():
     """
     Function to manually update for each version
     """
-    return "1.3.1"
+    return "2.0.0"
 
 
 def extract_ipv4(to_check, strict=False):
@@ -188,7 +189,14 @@ def extract_strings_from_file_handle(fh, minimum=4, charset=printable):
     result = ""
     read = fh.read
     c = read(1)
-    while c != "":
+
+    while len(c) != 0:
+        try:
+            c = c.decode("utf-8")
+        except Exception as e:
+            #print(e)
+            c = read(1)
+            continue 
         if state == 0:
             if c in charset:
                 result += c
@@ -271,7 +279,7 @@ def _test_extract_hosts_from_string():
         expected_back.remove(host)
     if len(expected_back) != 0:
         raise Exception("Not all values returned")
-    print "Passed"
+    print("Passed")
 
 
 def scan_file_handle(file_handle, strict_domains, check_ipv4, check_ipv6, check_domain):

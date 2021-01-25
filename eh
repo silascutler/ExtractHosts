@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from ExtractHosts import get_version, scan_paths, scan_file_handle, _test_extract_hosts_from_string
 from sys import stdin
 
@@ -19,9 +19,9 @@ def print_result(file, domain, show_files, hide_duplicates):
         if domain not in results[key]:
             results[key].add(domain)
     if show_files:
-        print "{0}\t{1}".format(file, domain)
+        print("{0}\t{1}".format(file, domain))
     else:
-        print domain
+        print(domain)
 
 
 if __name__ == "__main__":
@@ -30,7 +30,6 @@ if __name__ == "__main__":
     parser = ArgumentParser(
         prog=__file__,
         description="Identifies and extracts domains and IPs from files",
-        version="%(prog)s v" + get_version() + " by Brian Wallace (@botnet_hunter)",
         epilog="%(prog)s v" + get_version() + " by Brian Wallace (@botnet_hunter)"
     )
     parser.add_argument('path', metavar='path', type=str, nargs='*', default=None,
